@@ -12,7 +12,9 @@ export class SwitchAccessory {
   ) {
     const { Service, Characteristic } = this.platform.api.hap;
 
-    this.state = device.state?.power === 'on';
+    this.platform.logDebug("Initializing this switch...");
+    this.platform.logDebug(JSON.stringify(device));
+    this.state = device.state?.power;
 
     accessory.getService(Service.AccessoryInformation)!
       .setCharacteristic(Characteristic.Manufacturer, 'Hubspace')
@@ -32,11 +34,10 @@ export class SwitchAccessory {
   }
 
   async setOn(value: CharacteristicValue) {
-    this.platform.log.info(`Trying this out`);
     const isOn = value as boolean;
     this.state = isOn;
 
-    this.platform.log.info(`Setting switch ${this.device.name} to ${isOn ? 'on' : 'off'}`);
+    this.platform.logDebug(`Setting switch ${this.device.name} to ${isOn ? 'on' : 'off'}`);
 
     await this.platform.bridge.setDeviceState(this.device.device_id, {
       power: isOn ? 'on' : 'off',
@@ -52,7 +53,7 @@ export class SwitchAccessory {
     if (newState !== this.state) {
       this.state = newState;
       this.service.updateCharacteristic(this.platform.api.hap.Characteristic.On, newState);
-      this.platform.log.info(`Updated switch ${device.name} state to ${newState ? 'on' : 'off'}`);
+      this.platform.logDebug(`Updated switch ${device.name} state to ${newState ? 'on' : 'off'}`);
     }
   }
 }

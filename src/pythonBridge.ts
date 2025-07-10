@@ -117,6 +117,10 @@ export class PythonBridge {
   }
 
   async setDeviceState(deviceId: string, state: any) {
+    if (this.doDebugLogging) {
+      this.log.info("[ DEBUG ]: Setting Device state: ", deviceId, state);
+    }
+
     return await this.send({ command: 'set_device_state', device_id: deviceId, state });
   }
 }

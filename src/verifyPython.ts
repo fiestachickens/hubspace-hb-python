@@ -25,7 +25,7 @@ export function verifyPythonEnvironment(pythonPath: string, script: string, log:
       try {
         execSync(`${pythonPath} -c "import ${mod}"`);
         if (doDebugLogging) {
-          log.info(`[ DEBUG ] [ Python Check ] Python module '${mod}' is installed.`);
+          log.info(`[ DEBUG ] [ Python Check ]: Python module '${mod}' is installed.`);
         }
       } catch (modErr) {
         log.error(`[Python Check] Missing Python module: '${mod}'`);

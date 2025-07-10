@@ -46,12 +46,12 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
           this.log.info(`[ DEBUG ]: Initial Devices: ${JSON.stringify(res)}`);
         }
 
-        if (!res.devices) {
+        if (!res) {
           this.log.info(`No devices returned: ${JSON.stringify(res)}`);
           return;
         }
 
-        res.devices.forEach((device: any) => {
+        res.forEach((device: any) => {
           switch (device.type) {
             case "switch":
               this.configureSwitch(device);
@@ -82,6 +82,13 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
       }
     });
   }
+
+  public logDebug(message: string) {
+    if (this.config.doDebugLogging) {
+      this.log.info(`[ DEBUG ]: ${message}`);
+    }
+  }
+
 
   configureSwitch(device: any) { 
     const uuid = this.api.hap.uuid.generate(device.id);

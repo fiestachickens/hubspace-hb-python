@@ -30,23 +30,24 @@ class HubspaceCLI:
 
     async def handle_command(self, command):
         cmd = command.get("command")
+        devices = []
 
         if cmd == "list_devices":
-			# TODO: Iterate over the types instead
-            return {
-                "devices": [
-                    {
-                        "id": d.id,
-                        "device_id": d.id,
-                        "default_name": d.device_information.default_name,
-                        "name": d.device_information.name,
-                        "type": d.device_information.device_class,
-                        #"state": { this needs to be custom per type }
+            for d in self.bridge.switches.items:
+                devices.append({
+                    "id": d.id,
+                    "device_id": d.id,
+                    "default_name": d.device_information.default_name,
+                    "name": d.device_information.name,
+                    "type": d.device_information.device_class,
+                    "state": {
+                        "power": d.on.get(None).on if d.on.get(None) else None
                     }
-                    for d in self.bridge.devices.items
-                ]
-            }
+                })
 
+            # TODO: Add other types
+
+            return devices
         elif cmd == "set_switch":
             device_id = command.get("device_id")
             new_state = command.get("state")  # Should be "on" or "off"
@@ -59,7 +60,7 @@ class HubspaceCLI:
             return { "status": "closing" }
 
         else:
-            return { "error": f"Unknown command: {cmd}" }
+            return { "Unknown Command Error": f"Unknown command: {cmd}" }
 
     async def run(self):
         await self.initialize()
@@ -73,14 +74,14 @@ class HubspaceCLI:
                 try:
                     command = json.loads(line)
                 except json.JSONDecodeError as e:
-                    print(json.dumps({ "error": f"Invalid JSON: {str(e)}" }), flush=True)
+                    print(json.dumps({ "JSON Error": f"Invalid JSON: {str(e)}" }), flush=True)
                     continue
 
                 result = await self.handle_command(command)
                 print(json.dumps(result), flush=True)
 
             except Exception as e:
-                print(json.dumps({ "error": str(e) }), flush=True)
+                print(json.dumps({ "Unknown Error": str(e) }), flush=True)
 
         await self.bridge.close()
         print(json.dumps({ "closed": True }))
