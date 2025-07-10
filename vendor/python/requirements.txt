@@ -1,5 +1,2 @@
-flask
 # Add any dependencies required by the vendored hubspace module here
-homeassistant
 aioafero>=4
-aiofiles>=24.1.0
