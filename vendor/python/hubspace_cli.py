@@ -83,7 +83,7 @@ class HubspaceCLI:
                 print(json.dumps({ "error": str(e) }), flush=True)
 
         await self.bridge.close()
-        print("Bridge closed cleanly", file=sys.stderr)
+        print(json.dumps({ "closed": True }))
 
 # Entry point
 if __name__ == "__main__":

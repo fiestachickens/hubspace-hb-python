@@ -2,7 +2,7 @@ import { API, DynamicPlatformPlugin, Logger, PlatformConfig, PlatformAccessory }
 import { isConfigValid } from './config';
 import { PythonBridge } from './pythonBridge';
 import { SwitchAccessory } from './accessories/SwitchAccessory';
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings'; 
+import { PLATFORM_NAME, PLUGIN_NAME, POLLING_INTERVAL } from './settings'; 
 import path from 'path';
 
 export class HubspacePlatform implements DynamicPlatformPlugin {
@@ -19,38 +19,49 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
         return;
     }
 
-    // Attach shutdown hooks after pythonBridge is ready
-    process.on('exit', () => this.bridge.shutdown());
-    process.on('SIGINT', () => this.bridge.shutdown());
-    process.on('SIGTERM', () => this.bridge.shutdown());
-
     this.api.on('didFinishLaunching', async () => {
       const pluginRoot = path.join(__dirname, '..');
-      this.bridge = new PythonBridge(this.log, config.email, config.password, pluginRoot);
 
       try {
-        this.log.info("Getting devices...");
+        this.bridge = new PythonBridge(
+          this.log,
+          config.email,
+          config.password,
+          pluginRoot,
+          config.doDebugLogging
+        );
+
+        // Ensure the process is cleanly shutdown 
+        process.on('exit', () => this.bridge.shutdown());
+        process.on('SIGINT', () => this.bridge.shutdown());
+        process.on('SIGTERM', () => this.bridge.shutdown());
+
+        if (this.config.doDebugLogging) {
+          this.log.info("[ DEBUG ]: Getting devices...");
+        }
+
         const res = await this.bridge.getDevices();
-        console.log(res);
+
+        if (this.config.doDebugLogging) {
+          this.log.info(`[ DEBUG ]: Initial Devices: ${JSON.stringify(res)}`);
+        }
 
         if (!res.devices) {
-          this.log.error(`No devices returned: ${JSON.stringify(res)}`);
+          this.log.info(`No devices returned: ${JSON.stringify(res)}`);
           return;
         }
 
         res.devices.forEach((device: any) => {
-          if (device.type === 'switch') {
-            const uuid = this.api.hap.uuid.generate(device.id);
-            const accessory = new this.api.platformAccessory(device.name, uuid);
-            const switchAccessory = new SwitchAccessory(this, accessory, device);
-
-            this.deviceMap.set(device.device_id, switchAccessory);
-            this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-          } else {
-            this.log.warn(`Unsupported device type: ${device.type}`);
+          switch (device.type) {
+            case "switch":
+              this.configureSwitch(device);
+              break;
+            default:
+              this.log.warn(`Unsupported device type: ${device.type}`);
           }
         });
 
+        // Configure polling
         setInterval(async () => {
           try {
             const updated = await this.bridge.getDevices();
@@ -63,13 +74,22 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
           } catch (e) {
             this.log.error('Polling error:', e);
           }
-        }, 15000);
+        }, POLLING_INTERVAL * 1000);
 
       } catch (err) {
         this.log.error('Error initializing Hubspace plugin:', err);
         throw err;
       }
     });
+  }
+
+  configureSwitch(device: any) { 
+    const uuid = this.api.hap.uuid.generate(device.id);
+    const accessory = new this.api.platformAccessory(device.name, uuid);
+    const switchAccessory = new SwitchAccessory(this, accessory, device);
+
+    this.deviceMap.set(device.device_id, switchAccessory);
+    this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
   }
 
   // TODO: We need to handle cached accessories as well

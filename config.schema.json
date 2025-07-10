@@ -20,6 +20,10 @@
         "title": "Password",
         "type": "string",
         "format": "password"
+      },
+      "doDebugLogging": {
+        "title": "Debug Logging",
+        "type": "boolean"
       }
     }
   }

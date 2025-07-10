@@ -7,3 +7,5 @@ export const PLATFORM_NAME = 'HubspaceHbPython';
  * This must match the name of your plugin as defined the package.json
  */
 export const PLUGIN_NAME = 'homebridge-hubspace-hb-python';
+
+export const POLLING_INTERVAL = 30;
