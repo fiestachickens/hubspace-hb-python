@@ -17,7 +17,7 @@ export class SwitchAccessory {
     accessory.getService(Service.AccessoryInformation)!
       .setCharacteristic(Characteristic.Manufacturer, 'Hubspace')
       .setCharacteristic(Characteristic.Model, device.product_name || 'Switch')
-      .setCharacteristic(Characteristic.SerialNumber, device.device_id);
+      .setCharacteristic(Characteristic.SerialNumber, device.id);
 
     this.service = accessory.getService(Service.Switch)
       || accessory.addService(Service.Switch);
@@ -32,6 +32,7 @@ export class SwitchAccessory {
   }
 
   async setOn(value: CharacteristicValue) {
+    this.platform.log.info(`Trying this out`);
     const isOn = value as boolean;
     this.state = isOn;
 

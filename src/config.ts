@@ -7,7 +7,7 @@ import { PlatformConfig } from 'homebridge';
  */
 export function isConfigValid(config: PlatformConfig): boolean {
     return !(
-        !config.username ||
+        !config.email ||
         !config.password
     );
 }

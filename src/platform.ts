@@ -19,18 +19,28 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
         return;
     }
 
+    // Attach shutdown hooks after pythonBridge is ready
+    process.on('exit', () => this.bridge.shutdown());
+    process.on('SIGINT', () => this.bridge.shutdown());
+    process.on('SIGTERM', () => this.bridge.shutdown());
+
     this.api.on('didFinishLaunching', async () => {
       const pluginRoot = path.join(__dirname, '..');
-      this.bridge = new PythonBridge(config.email, config.password, pluginRoot);
+      this.bridge = new PythonBridge(this.log, config.email, config.password, pluginRoot);
 
       try {
-        await this.bridge.login();
-
+        this.log.info("Getting devices...");
         const res = await this.bridge.getDevices();
+        console.log(res);
+
+        if (!res.devices) {
+          this.log.error(`No devices returned: ${JSON.stringify(res)}`);
+          return;
+        }
 
         res.devices.forEach((device: any) => {
           if (device.type === 'switch') {
-            const uuid = this.api.hap.uuid.generate(device.device_id);
+            const uuid = this.api.hap.uuid.generate(device.id);
             const accessory = new this.api.platformAccessory(device.name, uuid);
             const switchAccessory = new SwitchAccessory(this, accessory, device);
 
@@ -57,6 +67,7 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
 
       } catch (err) {
         this.log.error('Error initializing Hubspace plugin:', err);
+        throw err;
       }
     });
   }
